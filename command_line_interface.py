@@ -24,11 +24,10 @@ import io
 import os
 
 
-def generate_audio(user_text, input_path, character, pitch_options) -> (float, int):
-    _, f0s, f0s_wo_silence, wav_name \
-        = controllable_talknet.select_file.__wrapped__(input_path, [''])
-    src, _, _, _ = controllable_talknet.generate_audio.__wrapped__(0, character, None, user_text,
-                                                                   pitch_options, 0, wav_name, f0s, f0s_wo_silence)
+def generate_audio(user_text, input_path, character, pitch_factor, pitch_options) -> (float, int):
+    _, f0s, f0s_wo_silence, wav_name = controllable_talknet.select_file.__wrapped__(input_path, [''])
+    src, _, _, _ = controllable_talknet.generate_audio.__wrapped__(0, character, None, user_text, pitch_options,
+                                                                   pitch_factor, wav_name, f0s, f0s_wo_silence)
     return get_audio_from_src(src, encoding='ascii')
 
 
@@ -45,10 +44,11 @@ if __name__ == '__main__':
     user_text = sys.argv[1]
     input_path = sys.argv[2]
     character = sys.argv[3]
-    pitch_options = sys.argv[4:]
+    pitch_factor = sys.argv[4]
+    pitch_options = sys.argv[5:]
 
     # generate audio
-    output_array, output_samplerate = generate_audio(user_text, input_path, character, pitch_options)
+    output_array, output_samplerate = generate_audio(user_text, input_path, character, pitch_factor, pitch_options)
 
     # prepare output directory
     results_dir = os.path.join(controllable_talknet.RUN_PATH, 'results')
