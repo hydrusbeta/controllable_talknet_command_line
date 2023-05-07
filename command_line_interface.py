@@ -25,7 +25,9 @@ import os
 
 
 def generate_audio(user_text, input_path, character, pitch_factor, pitch_options) -> (float, int):
-    _, f0s, f0s_wo_silence, wav_name = controllable_talknet.select_file.__wrapped__(input_path, [''])
+    f0s, f0s_wo_silence, wav_name = None, None, None
+    if input_path is not None:
+        _, f0s, f0s_wo_silence, wav_name = controllable_talknet.select_file.__wrapped__(input_path, [''])
     src, _, _, _ = controllable_talknet.generate_audio.__wrapped__(0, character, None, user_text, pitch_options,
                                                                    pitch_factor, wav_name, f0s, f0s_wo_silence)
     return get_audio_from_src(src, encoding='ascii')
@@ -40,12 +42,17 @@ def get_audio_from_src(src, encoding):
 
 
 if __name__ == '__main__':
+    # todo: Use flags and use the parsing system used by so-vits-svc 4.0; it's much nicer.
     # parse arguments
     user_text = sys.argv[1]
     input_path = sys.argv[2]
     character = sys.argv[3]
     pitch_factor = sys.argv[4]
     pitch_options = sys.argv[5:]
+
+    if input_path == '-':
+        input_path = None
+        pitch_options = list(set(pitch_options + ['dra'])) # Make sure pitch_options contains 'dra' (Disable Ref Audio)
 
     # generate audio
     output_array, output_samplerate = generate_audio(user_text, input_path, character, pitch_factor, pitch_options)
@@ -56,7 +63,5 @@ if __name__ == '__main__':
         os.makedirs(results_dir)
 
     # write output file
-    input_filename = os.path.basename(input_path)
-    input_filename_sans_extension = input_filename.split('.')[0]
-    output_filename = os.path.join(results_dir, input_filename_sans_extension + '.flac')
+    output_filename = os.path.join(results_dir, 'output.flac')
     soundfile.write(output_filename, output_array, output_samplerate, format='FLAC')
